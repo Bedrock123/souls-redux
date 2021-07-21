@@ -26,7 +26,7 @@ public class Helper : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        animator = GetComponent<Animator>();
+        animator = GetComponent<Animator>() ;
     }
 
     // Update is called once per frame
