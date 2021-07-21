@@ -3,8 +3,22 @@ using Rewired;
 
 public class InputHandler : MonoBehaviour
 {
+    [Header("Rewired Inputs")]
     public float playerHorizontalInput;
     public float playerVerticalInput;
+
+    public bool b_Input;
+    public bool a_Input;
+    public bool x_Input;
+    public bool y_Input;
+
+    bool rb_Input;
+    float rt_Axis;
+    bool rt_Input;
+
+    bool lb_Input;
+    bool lt_Axis;
+    float lt_Input;
 
     float delta;
 
@@ -22,8 +36,10 @@ public class InputHandler : MonoBehaviour
         // Reference the camera in the singleton
         cameraManager = CameraManager.singelton;
 
+        Debug.Log(cameraManager);
+
         // INit the camera manager with this.transform as the target
-        cameraManager.Init(this.transform);
+        cameraManager.Init(transform);
 
     }
 
@@ -54,11 +70,21 @@ public class InputHandler : MonoBehaviour
         cameraManager.Tick(delta);
     }
 
+    private void Update()
+    {
+        delta = Time.deltaTime;
+        stateManager.Tick(delta);
+    }
+
     void GetInput()
     {
         // Get the player movement
         playerHorizontalInput = player.GetAxis("Move Horizontal");
         playerVerticalInput = player.GetAxis("Move Vertical");
+
+        // Get player actions
+        b_Input = player.GetButton("B_Input");
+        rt_Axis = player.GetAxis("rt_Input");
     }
 
     void UpdateStates()
@@ -80,6 +106,17 @@ public class InputHandler : MonoBehaviour
         // Clamp that movement between 0 and 1
         stateManager.moveAmount = Mathf.Clamp01(movementAnimationSpeed);
 
+        // If the run input is flagged
+        if (b_Input)
+        {
+            // Only set state manage to run if our movemen taount is greater then 1
+            stateManager.run = (stateManager.moveAmount > 0);
+        }
+        else
+        {
+            // If not then set to false
+            stateManager.run = false;
+        }
 
     }
 }
