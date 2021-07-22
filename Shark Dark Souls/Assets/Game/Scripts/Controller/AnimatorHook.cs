@@ -5,6 +5,8 @@ public class AnimatorHook : MonoBehaviour
     Animator animator;
     StateManager stateManager;
 
+    public float rootMotionMultiplier;
+
     public void Init(StateManager _stateManager)
     {
         stateManager = _stateManager;
@@ -21,7 +23,9 @@ public class AnimatorHook : MonoBehaviour
         // rest the drag because we will move super fast to the new lcoation 
         stateManager.playerRigidbody.drag = 0;
 
-        float multiplier = 1;
+        // Sub division error handler
+        if (rootMotionMultiplier == 0)
+            rootMotionMultiplier = 1;
 
         // Get the delta between our current position and the root player
         Vector3 delta = animator.deltaPosition;
@@ -29,7 +33,7 @@ public class AnimatorHook : MonoBehaviour
         // Alwasy reset the y position
         delta.y = 0;
 
-        Vector3 velocityVector = (delta * multiplier) / stateManager.delta;
+        Vector3 velocityVector = (delta * rootMotionMultiplier) / stateManager.delta;
 
         // Assign the velocity to the player to rigid body
         stateManager.playerRigidbody.velocity = velocityVector;

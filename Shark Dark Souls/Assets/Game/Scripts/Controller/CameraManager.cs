@@ -101,9 +101,7 @@ public class CameraManager : MonoBehaviour
         cameraPivotTransform.localRotation = Quaternion.Euler(tiltAngle, 0, 0);
 
 
-        // The lock on overrides the left and right look angle
-        // Turn the camera on the look angle which is the main camera holder attached to the player
-        lookAngle += smoothX * _targetSpeed;
+
 
         // Hand 
         // If lock on do semton else
@@ -126,10 +124,16 @@ public class CameraManager : MonoBehaviour
             // Slper the two rotations together
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _delta * 9);
 
+            // Reset the look angle so it does not jump
+            lookAngle = transform.eulerAngles.y;
+
             return;
         }
 
 
+        // The lock on overrides the left and right look angle
+        // Turn the camera on the look angle which is the main camera holder attached to the player
+        lookAngle += smoothX * _targetSpeed;
 
         // Rotates the main camera player boast transform left and right as it rotates on the X axis
         transform.rotation = Quaternion.Euler(0, lookAngle, 0);

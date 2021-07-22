@@ -12,12 +12,14 @@ public class StateManager : MonoBehaviour
     public Vector3 moveDirection;
     public bool rt, rb, lt, lb;
     public bool twoHanded;
+    public bool rollInput;
 
     [Header("Stats")]
     public float moveSpeed = 2; // Counts for walking and jogging
     public float runSpeed = 3.5f; // Only counts for sprinting speed
     public float rotateSpeed = 5;
     public float toGround = 0.5f; // Offset to ground
+    public float rollSpeed = 1;
     
 
     [Header("States")]
@@ -27,6 +29,8 @@ public class StateManager : MonoBehaviour
     public bool inAction;
     public bool canMove;
     public bool isTwoHanded;
+    
+
 
     [Header("Other")]
     public EnemyTarget lockOnTarget;
@@ -136,6 +140,10 @@ public class StateManager : MonoBehaviour
         if (!canMove)
             return;
 
+        // If we cannot move then check also for handle rolls
+        animatorHook.rootMotionMultiplier = 1; // reset the root motion multiplier
+        HandleRolls();
+
         animator.applyRootMotion = false;
 
         // Prevents us from sliding when moving
@@ -157,33 +165,41 @@ public class StateManager : MonoBehaviour
         if (run)
             lockOn = false;
 
-        // If we are locked on then move the character freely
-        if (!lockOn)
+        // Create a new vector3 so we dont mess with move direction
+        Vector3 targetDirection = (lockOn == false) ? moveDirection
+            : lockOnTarget.transform.position - transform.position;
+
+        // Always set target direction to 0
+        targetDirection.y = 0;
+
+        // If the direction direction is just forward, then just set it to the transform.forward
+        if (targetDirection == Vector3.zero)
         {
-            // Create a new vector3 so we dont mess with move direction
-            Vector3 targetDirection = moveDirection;
-
-            // Always set target direction to 0
-            targetDirection.y = 0;
-
-            // If the direction direction is just forward, then just set it to the transform.forward
-            if (targetDirection == Vector3.zero)
-            {
-                targetDirection = transform.forward;
-            }
-
-            // Get the target rotation from look rotation with target direction
-            Quaternion tr = Quaternion.LookRotation(targetDirection);
-
-            // Sleprt the current rotation to the target rotation
-            Quaternion targetRotation = Quaternion.Slerp(transform.rotation, tr, delta * rotateSpeed * moveAmount);
-
-            // Set the current transform rotation to the target rotation
-            transform.rotation = targetRotation;
+            targetDirection = transform.forward;
         }
 
-        // Passes in the move amount to the animations
-        HandleMovementAnimations();
+        // Get the target rotation from look rotation with target direction
+        Quaternion tr = Quaternion.LookRotation(targetDirection);
+
+        // Sleprt the current rotation to the target rotation
+        Quaternion targetRotation = Quaternion.Slerp(transform.rotation, tr, delta * rotateSpeed * moveAmount);
+
+        // Set the current transform rotation to the target rotation
+        transform.rotation = targetRotation;
+
+        // Set the animator lock to the normal lock on input variabnle
+        animator.SetBool("LockOn", lockOn);
+
+        // If lock then handle movement thrugh the lock animatinos
+        if (lockOn)
+        {
+            // If we are locked in then strife left and right and backwards
+            HandleLockOnAnimations(moveDirection);
+        } else
+        {
+            // Passes in the move amount to the animations
+            HandleMovementAnimations();
+        }
     }
 
     public void Tick(float _delta)
@@ -195,6 +211,53 @@ public class StateManager : MonoBehaviour
 
         // Set the animator bool for OnGround
         animator.SetBool("OnGround", onGround);
+    }
+
+    public void HandleRolls()
+    {
+        if (!rollInput)
+            return;
+
+        float _vertical = vertical;
+        float _horizontal = horizontal;
+
+        //_vertical = (moveAmount > 0.3f) ? 1 : 0;
+        //_horizontal = 0;
+
+
+        //if (moveDirection == Vector3.zero)
+        //    moveDirection = transform.forward;
+
+        //Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+
+        //transform.rotation = targetRotation;
+
+        // Snap the vertical and horitonal in place
+        if (lockOn == false)
+        {
+            _vertical = (moveAmount > 0.3f) ? 1 : 0;
+            _horizontal = 0;
+
+        }
+        else
+        {
+            if (Mathf.Abs(_vertical) < 0.3f)
+                _vertical = 0;
+
+            if (Mathf.Abs(_horizontal) < 0.3f)
+                _horizontal = 0;
+        }
+
+        // Handle teh roll
+        animatorHook.rootMotionMultiplier = rollSpeed;
+
+        // Set the animator floats
+        animator.SetFloat("Vertical", _vertical);
+        animator.SetFloat("Horizontal", _horizontal);
+
+        canMove = false;
+        inAction = true;
+        animator.CrossFade("Rolls", 0.2f);
     }
 
     public void DetectAction()
@@ -234,6 +297,20 @@ public class StateManager : MonoBehaviour
     {
         animator.SetBool("Running", run);
         animator.SetFloat("Vertical", moveAmount, 0.4f, delta);
+    }
+
+    void HandleLockOnAnimations(Vector3 moveDirection)
+    {
+        // Get the location direction based on the world space move directino
+        Vector3 relativeDirection = transform.InverseTransformDirection(moveDirection);
+
+        // Get the horizontal and vertical movement from the x and the z
+        float horizontal = relativeDirection.x;
+        float vertical = relativeDirection.z;
+
+        // Set the animator floats
+        animator.SetFloat("Vertical", vertical, 0.2f, delta);
+        animator.SetFloat("Horizontal", horizontal, 0.2f, delta);
     }
 
     public bool OnGround()

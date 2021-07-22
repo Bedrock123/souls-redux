@@ -126,16 +126,18 @@ public class InputHandler : MonoBehaviour
         // Clamp that movement between 0 and 1
         stateManager.moveAmount = Mathf.Clamp01(movementAnimationSpeed);
 
+        stateManager.rollInput = b_Input;
+
         // If the run input is flagged
         if (b_Input)
         {
             // Only set state manage to run if our movemen taount is greater then 1
-            stateManager.run = (stateManager.moveAmount > 0);
+            //stateManager.run = (stateManager.moveAmount > 0);
         }
         else
         {
             // If not then set to false
-            stateManager.run = false;
+            //stateManager.run = false;
         }
 
         // Update the state manager with the triggers

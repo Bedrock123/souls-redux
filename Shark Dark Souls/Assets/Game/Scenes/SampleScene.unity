@@ -1215,7 +1215,7 @@ MonoBehaviour:
       _descriptiveName: LockOn
       _positiveDescriptiveName: 
       _negativeDescriptiveName: 
-      _behaviorId: 0
+      _behaviorId: 1
       _userAssignable: 1
       _categoryId: 2
     actionCategories:
