@@ -90,20 +90,27 @@ public class CameraManager : MonoBehaviour
             smoothY = _vertical;
         }
 
-        // Rotates the main camera player boast transform left and right as it rotates on the X axis
-        transform.rotation = Quaternion.Euler(0, lookAngle, 0);
-
+        // Handle teh tile up and down
         // Turns the camera pivot up and down which needs to have a clamp
         tiltAngle += smoothY * _targetSpeed;
 
         // Clamp the angle so it does go full 360 degrees
         tiltAngle = Mathf.Clamp(tiltAngle, minimumPivotAngle, maximumPivotAngle);
 
+        // Rotate the local rotation of the camera pivot
+        cameraPivotTransform.localRotation = Quaternion.Euler(tiltAngle, 0, 0);
+
+
+        // The lock on overrides the left and right look angle
+        // Turn the camera on the look angle which is the main camera holder attached to the player
+        lookAngle += smoothX * _targetSpeed;
+
+        // Hand 
         // If lock on do semton else
         if (lockOn && lockOnTarget != null)
         {
             // Get the direction towards the target
-            Vector3 directionTowardsLockOnTarget = lockOnTarget.position = transform.position;
+            Vector3 directionTowardsLockOnTarget = lockOnTarget.position - transform.position;
 
             // Normalize the direction
             directionTowardsLockOnTarget.Normalize();
@@ -122,11 +129,11 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        // Turn the camera on the look angle which is the main camera holder attached to the player
-        lookAngle += smoothX * _targetSpeed;
-  
-        // Rotate the local rotation of the camera pivot
-        cameraPivotTransform.localRotation = Quaternion.Euler(tiltAngle, 0, 0);
+
+
+        // Rotates the main camera player boast transform left and right as it rotates on the X axis
+        transform.rotation = Quaternion.Euler(0, lookAngle, 0);
+
 
     }
 

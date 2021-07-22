@@ -162,6 +162,12 @@ public class InputHandler : MonoBehaviour
             {
                 stateManager.lockOn = false;
             }
+
+            // Set teh state managet enenty target transofrm as teh camera lock on target
+            cameraManager.lockOnTarget = stateManager.lockOnTarget.transform;
+
+            // Turn on the camera manager lock on flag
+            cameraManager.lockOn = stateManager.lockOn;
         }
 
     }
