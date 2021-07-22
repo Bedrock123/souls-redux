@@ -3,22 +3,25 @@ using Rewired;
 
 public class InputHandler : MonoBehaviour
 {
-    [Header("Rewired Inputs")]
+    [Header("Movement")]
     public float playerHorizontalInput;
     public float playerVerticalInput;
 
+    [Header("Action Buttons")]
     public bool b_Input;
     public bool a_Input;
     public bool x_Input;
     public bool y_Input;
 
-    bool rb_Input;
-    float rt_Axis;
-    bool rt_Input;
+    [Header("Action Bumpers Right")]
+    public bool rb_Input;
+    public bool rt_Input;
 
-    bool lb_Input;
-    bool lt_Axis;
-    float lt_Input;
+    [Header("Action Bumpers Left")]
+    public bool lb_Input;
+    public bool lt_Input;
+
+    public bool strong_attack_Input;
 
     float delta;
 
@@ -35,8 +38,6 @@ public class InputHandler : MonoBehaviour
 
         // Reference the camera in the singleton
         cameraManager = CameraManager.singelton;
-
-        Debug.Log(cameraManager);
 
         // INit the camera manager with this.transform as the target
         cameraManager.Init(transform);
@@ -84,7 +85,24 @@ public class InputHandler : MonoBehaviour
 
         // Get player actions
         b_Input = player.GetButton("B_Input");
-        rt_Axis = player.GetAxis("rt_Input");
+        x_Input = player.GetButton("X_Input");
+        a_Input = player.GetButton("A_Input");
+        y_Input = player.GetButton("Y_Input");
+
+        // Attacks
+        rb_Input = player.GetButton("rb_Input");
+        lb_Input = player.GetButton("lb_Input");
+
+        // Strong attack modifer
+        strong_attack_Input = player.GetButton("Strong Attack");
+
+        // Strong attacks
+        rt_Input = strong_attack_Input && rb_Input;
+        lt_Input = strong_attack_Input && lb_Input;
+
+        // Disable weak attacks if strong attacks on
+        rb_Input = rb_Input && !rt_Input;
+        lb_Input = lb_Input && !lt_Input;
     }
 
     void UpdateStates()
@@ -118,5 +136,15 @@ public class InputHandler : MonoBehaviour
             stateManager.run = false;
         }
 
+        // Update the state manager with the triggers
+        stateManager.rt = rt_Input;
+        stateManager.rb = rb_Input;
+        stateManager.lb = lb_Input;
+        stateManager.lt = lt_Input;
+
     }
+
+    // Just to clear out errors
+    public void OpenDamageColliders() { }
+    public void CloseDamageColliders() { }
 }

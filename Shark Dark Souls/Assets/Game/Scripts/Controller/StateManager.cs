@@ -10,27 +10,35 @@ public class StateManager : MonoBehaviour
     public float vertical;
     public float moveAmount;
     public Vector3 moveDirection;
+    public bool rt, rb, lt, lb;
 
     [Header("Stats")]
     public float moveSpeed = 2; // Counts for walking and jogging
     public float runSpeed = 3.5f; // Only counts for sprinting speed
     public float rotateSpeed = 5;
-    public float toGround = 0.5f;
+    public float toGround = 0.5f; // Offset to ground
+    
 
     [Header("Stats")]
     public bool run;
     public bool lockOn;
     public bool onGround;
+    public bool inAction;
+    public bool canMove;
 
     [HideInInspector]
     public Animator animator;
     [HideInInspector]
     public Rigidbody playerRigidbody;
+    [HideInInspector]
+    public AnimatorHook animatorHook;
 
     [HideInInspector]
     public float delta;
     [HideInInspector]
     public LayerMask ignoreLayers;
+
+    float _actionDelay;
 
     public void Init()
     {
@@ -44,6 +52,13 @@ public class StateManager : MonoBehaviour
         playerRigidbody.angularDrag = 999;
         playerRigidbody.drag = 4;
         playerRigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        // Assign the animator hook to the active model
+        animatorHook = activeModel.AddComponent<AnimatorHook>();
+        animatorHook.Init(this);
+
+        // Add in the small helper to avoid on collision animator errors
+        activeModel.AddComponent<Helper>();
 
         // Set ignore layers
         gameObject.layer = 8;
@@ -85,6 +100,38 @@ public class StateManager : MonoBehaviour
     {
         delta = _delta;
 
+
+        
+        // Detect the bumper actions
+        DetectAction();
+
+        // If we are in action turn everything off for running
+        if (inAction)
+        {
+            animator.applyRootMotion = true;
+
+            _actionDelay += delta;
+
+            if (_actionDelay > 0.3f)
+            {
+                inAction = false;
+                _actionDelay = 0;
+            } else
+            {
+                return;
+            }
+
+        }
+        
+
+        // In action equals the opoostie of the animato can move
+        canMove = animator.GetBool("CanMove");
+
+        if (!canMove)
+            return;
+
+        animator.applyRootMotion = false;
+
         // Prevents us from sliding when moving
         // If we are not on the ground then set zero so we fall fast down
         playerRigidbody.drag = (moveAmount > 0 || onGround == false) ? 0 : 4;
@@ -97,7 +144,7 @@ public class StateManager : MonoBehaviour
 
         // If we are not on ground
         if (onGround)
-        // We are updating the values in the input handler before we are calling this tick int he statemanager
+            // We are updating the values in the input handler before we are calling this tick int he statemanager
             playerRigidbody.velocity = moveDirection * (targetSpeed * moveAmount);
 
         // If we are running lock on = false;
@@ -142,6 +189,39 @@ public class StateManager : MonoBehaviour
 
         // Set the animator bool for OnGround
         animator.SetBool("OnGround", onGround);
+    }
+
+    public void DetectAction()
+    {
+
+        if (canMove == false)
+            return;
+
+        if (rb == false && rt == false && lt == false && lb == false)
+            return;
+
+        string targetAnimation = null;
+
+        if (rb)
+            targetAnimation = "oh_attack_1";
+
+        if (rt)
+            targetAnimation = "oh_attack_2";
+
+        if (lb)
+            targetAnimation = "oh_attack_3";
+
+        if (lt)
+            targetAnimation = "th_attack_1";
+
+
+        if (string.IsNullOrEmpty(targetAnimation))
+            return;
+
+        canMove = false;
+        inAction = true;
+        animator.CrossFade(targetAnimation, 0.2f);
+
     }
 
     void HandleMovementAnimations()
