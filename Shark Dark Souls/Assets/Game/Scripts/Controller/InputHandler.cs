@@ -21,7 +21,9 @@ public class InputHandler : MonoBehaviour
     public bool lb_Input;
     public bool lt_Input;
 
+    [Header("Misc Controls")]
     public bool strong_attack_Input;
+    public bool lockon_Input;
 
     float delta;
 
@@ -66,7 +68,6 @@ public class InputHandler : MonoBehaviour
         // Update the statement from the input handler via the Time.Delta time
         stateManager.FixedTick(delta);
 
-
         // Update the camera manager
         cameraManager.Tick(delta);
     }
@@ -85,16 +86,17 @@ public class InputHandler : MonoBehaviour
 
         // Get player actions
         b_Input = player.GetButton("B_Input");
-        x_Input = player.GetButton("X_Input");
-        a_Input = player.GetButton("A_Input");
-        y_Input = player.GetButton("Y_Input");
+        x_Input = player.GetButtonDown("X_Input");
+        a_Input = player.GetButtonDown("A_Input");
+        y_Input = player.GetButtonDown("Y_Input");
 
         // Attacks
-        rb_Input = player.GetButton("rb_Input");
-        lb_Input = player.GetButton("lb_Input");
+        rb_Input = player.GetButtonDown("rb_Input");
+        lb_Input = player.GetButtonDown("lb_Input");
 
-        // Strong attack modifer
+        // Misc Inputs
         strong_attack_Input = player.GetButton("Strong Attack");
+        lockon_Input = player.GetButtonDown("LockOn");
 
         // Strong attacks
         rt_Input = strong_attack_Input && rb_Input;
@@ -142,9 +144,25 @@ public class InputHandler : MonoBehaviour
         stateManager.lb = lb_Input;
         stateManager.lt = lt_Input;
 
-    }
+        // Handle the two handed states
+        if (y_Input)
+        {
+            stateManager.isTwoHanded = !stateManager.isTwoHanded;
+            stateManager.HandleTwoHanded();
+        }
 
-    // Just to clear out errors
-    public void OpenDamageColliders() { }
-    public void CloseDamageColliders() { }
+        // Handle lock on
+        if (lockon_Input)
+        {
+            // Flip the lock on and off
+            stateManager.lockOn = !stateManager.lockOn;
+
+            // If there is not target currently then simple just set lock to false
+            if (stateManager.lockOnTarget == null)
+            {
+                stateManager.lockOn = false;
+            }
+        }
+
+    }
 }

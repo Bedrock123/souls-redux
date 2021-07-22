@@ -11,6 +11,7 @@ public class StateManager : MonoBehaviour
     public float moveAmount;
     public Vector3 moveDirection;
     public bool rt, rb, lt, lb;
+    public bool twoHanded;
 
     [Header("Stats")]
     public float moveSpeed = 2; // Counts for walking and jogging
@@ -19,12 +20,17 @@ public class StateManager : MonoBehaviour
     public float toGround = 0.5f; // Offset to ground
     
 
-    [Header("Stats")]
+    [Header("States")]
     public bool run;
     public bool lockOn;
     public bool onGround;
     public bool inAction;
     public bool canMove;
+    public bool isTwoHanded;
+
+    [Header("Other")]
+    public EnemyTarget lockOnTarget;
+
 
     [HideInInspector]
     public Animator animator;
@@ -260,6 +266,11 @@ public class StateManager : MonoBehaviour
 
         // Retutn grounded status
         return grounded;
+    }
+
+    public void HandleTwoHanded()
+    {
+        animator.SetBool("TwoHandedWeapon", isTwoHanded);
     }
 
 }

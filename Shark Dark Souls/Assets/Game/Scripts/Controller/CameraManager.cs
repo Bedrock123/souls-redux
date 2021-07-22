@@ -11,7 +11,10 @@ public class CameraManager : MonoBehaviour
     public bool lockOn;
     public float followSpeed = 9;
     public float targetSpeed = 2;
+
+    [Header("Targets")]
     public Transform target;
+    public Transform lockOnTarget;
 
     [HideInInspector]
     public Transform cameraPivotTransform;
@@ -87,14 +90,6 @@ public class CameraManager : MonoBehaviour
             smoothY = _vertical;
         }
 
-        // If lock on do semton else
-        if (lockOn)
-        {
-
-        }
-
-        // Turn the camera on the look angle which is the main camera holder attached to the player
-        lookAngle += smoothX * _targetSpeed;
         // Rotates the main camera player boast transform left and right as it rotates on the X axis
         transform.rotation = Quaternion.Euler(0, lookAngle, 0);
 
@@ -104,6 +99,32 @@ public class CameraManager : MonoBehaviour
         // Clamp the angle so it does go full 360 degrees
         tiltAngle = Mathf.Clamp(tiltAngle, minimumPivotAngle, maximumPivotAngle);
 
+        // If lock on do semton else
+        if (lockOn && lockOnTarget != null)
+        {
+            // Get the direction towards the target
+            Vector3 directionTowardsLockOnTarget = lockOnTarget.position = transform.position;
+
+            // Normalize the direction
+            directionTowardsLockOnTarget.Normalize();
+
+            //directionTowardsLockOnTarget.y = 0;
+
+            if (directionTowardsLockOnTarget == Vector3.zero)
+                directionTowardsLockOnTarget = transform.forward;
+
+            // Get the rotaiton from the direectio of the player
+            Quaternion targetRotation = Quaternion.LookRotation(directionTowardsLockOnTarget);
+
+            // Slper the two rotations together
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _delta * 9);
+
+            return;
+        }
+
+        // Turn the camera on the look angle which is the main camera holder attached to the player
+        lookAngle += smoothX * _targetSpeed;
+  
         // Rotate the local rotation of the camera pivot
         cameraPivotTransform.localRotation = Quaternion.Euler(tiltAngle, 0, 0);
 
