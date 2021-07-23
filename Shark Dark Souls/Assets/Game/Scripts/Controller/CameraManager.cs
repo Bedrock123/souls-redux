@@ -6,6 +6,7 @@ public class CameraManager : MonoBehaviour
     [Header("Input")]
     public float cameraHorizintalInput;
     public float cameraVerticalInput;
+    bool usedRightAxis;
 
     [Header("Speeds")]
     public bool lockOn;
@@ -14,12 +15,14 @@ public class CameraManager : MonoBehaviour
 
     [Header("Targets")]
     public Transform target;
-    public Transform lockOnTarget;
+    public EnemyTarget lockOnTarget;
+    public Transform lockOnTransform;
 
     [HideInInspector]
     public Transform cameraPivotTransform;
     [HideInInspector]
     public Transform cameraTransform;
+    StateManager stateManager;
 
     [Header("Angles")]
     public float minimumPivotAngle = -35;
@@ -33,17 +36,15 @@ public class CameraManager : MonoBehaviour
     public float lookAngle;
     public float tiltAngle;
 
-
-
-
     private Player player;
 
     public static CameraManager singelton;
 
-    public void Init(Transform _target)
+    public void Init(StateManager _stateManager)
     {
         // Set the tarrget on init.
-        target = _target;
+        target = _stateManager.transform;
+        stateManager = _stateManager;
 
         // Set the camera transform & pivtor transform
         cameraTransform = Camera.main.transform;
@@ -55,6 +56,41 @@ public class CameraManager : MonoBehaviour
         // Handle camera movement
         cameraHorizintalInput = player.GetAxis("Move Camera Horizontal");
         cameraVerticalInput = player.GetAxis("Move Camera Vertical");
+
+        // If there is a lock on target
+        if (lockOnTarget != null)
+        {
+            // If there is not lock on transform set one
+            if (lockOnTransform == null)
+            {
+                lockOnTransform = lockOnTarget.GetTarget();
+                stateManager.lockOnTransform = lockOnTransform;
+            }
+
+            // If the left stick X axis is greater then .6 then 
+            if (Mathf.Abs(cameraHorizintalInput) > 0.6f)
+            {
+                // If we have noa already used 
+                if (!usedRightAxis)
+                {
+                    // Switch the axis
+                    lockOnTransform = lockOnTarget.GetTarget((cameraHorizintalInput > 0));
+                    stateManager.lockOnTransform = lockOnTransform;
+                    usedRightAxis = true;
+                }
+            }
+        }
+
+        // If the right axis was used
+        if (usedRightAxis)
+        {
+            // If the stick is based in its normal position
+            if (Mathf.Abs(cameraHorizintalInput) < 0.6f)
+            {
+                // Set use right axis to false
+                usedRightAxis = false;
+            }
+        }
 
         // Follows the player head base
         FollowTarget(_delta);
@@ -100,15 +136,12 @@ public class CameraManager : MonoBehaviour
         // Rotate the local rotation of the camera pivot
         cameraPivotTransform.localRotation = Quaternion.Euler(tiltAngle, 0, 0);
 
-
-
-
         // Hand 
         // If lock on do semton else
         if (lockOn && lockOnTarget != null)
         {
             // Get the direction towards the target
-            Vector3 directionTowardsLockOnTarget = lockOnTarget.position - transform.position;
+            Vector3 directionTowardsLockOnTarget = lockOnTransform.position - transform.position;
 
             // Normalize the direction
             directionTowardsLockOnTarget.Normalize();
@@ -129,7 +162,6 @@ public class CameraManager : MonoBehaviour
 
             return;
         }
-
 
         // The lock on overrides the left and right look angle
         // Turn the camera on the look angle which is the main camera holder attached to the player

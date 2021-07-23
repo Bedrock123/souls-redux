@@ -30,10 +30,10 @@ public class StateManager : MonoBehaviour
     public bool canMove;
     public bool isTwoHanded;
     
-
-
     [Header("Other")]
     public EnemyTarget lockOnTarget;
+    public Transform lockOnTransform;
+    public AnimationCurve rollCurve;
 
 
     [HideInInspector]
@@ -122,6 +122,7 @@ public class StateManager : MonoBehaviour
 
             _actionDelay += delta;
 
+            // Ensure we ar in action for over .3 secnds before doing something
             if (_actionDelay > 0.3f)
             {
                 inAction = false;
@@ -141,7 +142,7 @@ public class StateManager : MonoBehaviour
             return;
 
         // If we cannot move then check also for handle rolls
-        animatorHook.rootMotionMultiplier = 1; // reset the root motion multiplier
+        animatorHook.CloseRoll();
         HandleRolls();
 
         animator.applyRootMotion = false;
@@ -167,7 +168,9 @@ public class StateManager : MonoBehaviour
 
         // Create a new vector3 so we dont mess with move direction
         Vector3 targetDirection = (lockOn == false) ? moveDirection
-            : lockOnTarget.transform.position - transform.position;
+            : (lockOnTransform != null) ?
+            lockOnTransform.position - transform.position :
+            moveDirection;
 
         // Always set target direction to 0
         targetDirection.y = 0;
@@ -221,35 +224,45 @@ public class StateManager : MonoBehaviour
         float _vertical = vertical;
         float _horizontal = horizontal;
 
-        //_vertical = (moveAmount > 0.3f) ? 1 : 0;
-        //_horizontal = 0;
+        _vertical = (moveAmount > 0.3f) ? 1 : 0;
+        _horizontal = 0;
 
 
-        //if (moveDirection == Vector3.zero)
-        //    moveDirection = transform.forward;
+        if (_vertical != 0)
+        {
+            if (moveDirection == Vector3.zero)
+                moveDirection = transform.forward;
 
-        //Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
 
-        //transform.rotation = targetRotation;
+            transform.rotation = targetRotation;
+
+            // Sets the params for rolling based on the animation curve
+            animatorHook.InitForRoll();
+
+            // Handle teh roll
+            animatorHook.rootMotionMultiplier = rollSpeed;
+        } else
+        {
+            animatorHook.rootMotionMultiplier = 1.3f;
+        }
 
         // Snap the vertical and horitonal in place
-        if (lockOn == false)
-        {
-            _vertical = (moveAmount > 0.3f) ? 1 : 0;
-            _horizontal = 0;
+        //if (lockOn == false)
+        //{
+        //    _vertical = (moveAmount > 0.3f) ? 1 : 0;
+        //    _horizontal = 0;
 
-        }
-        else
-        {
-            if (Mathf.Abs(_vertical) < 0.3f)
-                _vertical = 0;
+        //}
+        //else
+        //{
+        //    if (Mathf.Abs(_vertical) < 0.3f)
+        //        _vertical = 0;
 
-            if (Mathf.Abs(_horizontal) < 0.3f)
-                _horizontal = 0;
-        }
+        //    if (Mathf.Abs(_horizontal) < 0.3f)
+        //        _horizontal = 0;
+        //}
 
-        // Handle teh roll
-        animatorHook.rootMotionMultiplier = rollSpeed;
 
         // Set the animator floats
         animator.SetFloat("Vertical", _vertical);
@@ -258,6 +271,8 @@ public class StateManager : MonoBehaviour
         canMove = false;
         inAction = true;
         animator.CrossFade("Rolls", 0.2f);
+
+     
     }
 
     public void DetectAction()
@@ -305,8 +320,8 @@ public class StateManager : MonoBehaviour
         Vector3 relativeDirection = transform.InverseTransformDirection(moveDirection);
 
         // Get the horizontal and vertical movement from the x and the z
-        float horizontal = relativeDirection.x;
-        float vertical = relativeDirection.z;
+        float horizontal = relativeDirection.x * moveAmount;
+        float vertical = relativeDirection.z * moveAmount;
 
         // Set the animator floats
         animator.SetFloat("Vertical", vertical, 0.2f, delta);

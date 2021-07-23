@@ -25,6 +25,13 @@ public class InputHandler : MonoBehaviour
     public bool strong_attack_Input;
     public bool lockon_Input;
 
+    [Header("Action Timers")]
+    public float b_Input_Timer;
+    public float rt_Input_Timer;
+    public float lt_Input_Timer;
+
+
+
     float delta;
 
     StateManager stateManager;
@@ -35,6 +42,9 @@ public class InputHandler : MonoBehaviour
 
     private void Awake()
     {
+        stateManager = GetComponent<StateManager>();
+        stateManager.Init();
+
         // Get the player object form the playe index
         player = ReInput.players.GetPlayer(0);
 
@@ -42,15 +52,8 @@ public class InputHandler : MonoBehaviour
         cameraManager = CameraManager.singelton;
 
         // INit the camera manager with this.transform as the target
-        cameraManager.Init(transform);
+        cameraManager.Init(stateManager);
 
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        stateManager = GetComponent<StateManager>();
-        stateManager.Init();
     }
 
     
@@ -166,7 +169,10 @@ public class InputHandler : MonoBehaviour
             }
 
             // Set teh state managet enenty target transofrm as teh camera lock on target
-            cameraManager.lockOnTarget = stateManager.lockOnTarget.transform;
+            cameraManager.lockOnTarget = stateManager.lockOnTarget;
+
+            // Set the lock on transform as well
+            stateManager.lockOnTransform = cameraManager.lockOnTransform;
 
             // Turn on the camera manager lock on flag
             cameraManager.lockOn = stateManager.lockOn;
