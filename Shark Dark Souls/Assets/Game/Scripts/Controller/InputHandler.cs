@@ -91,16 +91,16 @@ public class InputHandler : MonoBehaviour
         y_Input = player.GetButtonDown("Y_Input");
 
         // Attacks
-        rb_Input = player.GetButtonDown("rb_Input");
-        lb_Input = player.GetButtonDown("lb_Input");
+        rb_Input = player.GetButtonDown("RB_Input");
+        lb_Input = player.GetButtonDown("LB_Input");
 
         // Misc Inputs
         strong_attack_Input = player.GetButton("Strong Attack");
         lockon_Input = player.GetButtonDown("LockOn");
 
         // Strong attacks
-        rt_Input = strong_attack_Input && rb_Input;
-        lt_Input = strong_attack_Input && lb_Input;
+        rt_Input = (strong_attack_Input && rb_Input) || player.GetButtonDown("RT_Input");
+        lt_Input = strong_attack_Input && lb_Input || player.GetButtonDown("LT_Input");
 
         // Disable weak attacks if strong attacks on
         rb_Input = rb_Input && !rt_Input;
