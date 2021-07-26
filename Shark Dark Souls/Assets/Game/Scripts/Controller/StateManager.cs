@@ -42,6 +42,10 @@ public class StateManager : MonoBehaviour
     public Rigidbody playerRigidbody;
     [HideInInspector]
     public AnimatorHook animatorHook;
+    [HideInInspector]
+    public ActionManager actionManager;
+    [HideInInspector]
+    public InventoryManager inventoryManager;
 
     [HideInInspector]
     public float delta;
@@ -62,6 +66,14 @@ public class StateManager : MonoBehaviour
         playerRigidbody.angularDrag = 999;
         playerRigidbody.drag = 4;
         playerRigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        // Get all the current invneoty from th player
+        inventoryManager = GetComponent<InventoryManager>();
+        inventoryManager.Init();
+
+        // Set up the action slots
+        actionManager = GetComponent<ActionManager>();
+        actionManager.Init(this);
 
         // Assign the animator hook to the active model
         animatorHook = activeModel.AddComponent<AnimatorHook>();
@@ -164,7 +176,11 @@ public class StateManager : MonoBehaviour
 
         // If we are running lock on = false;
         if (run)
+        {
             lockOn = false;
+            
+        }
+
 
         // Create a new vector3 so we dont mess with move direction
         Vector3 targetDirection = (lockOn == false) ? moveDirection
@@ -278,26 +294,24 @@ public class StateManager : MonoBehaviour
     public void DetectAction()
     {
 
+        // If we can move then do nothing, cause when we are in action we cannot move
         if (canMove == false)
             return;
 
+        // If no buttons are pres also do null.
         if (rb == false && rt == false && lt == false && lb == false)
             return;
 
         string targetAnimation = null;
 
-        if (rb)
-            targetAnimation = "oh_attack_1";
+        // Pass the state manager to get the action managert
+        Action actionSlot = actionManager.GetActionSlot(this);
 
-        if (rt)
-            targetAnimation = "oh_attack_2";
+        // If there is no action reutn nothing
+        if (actionSlot == null)
+            return;
 
-        if (lb)
-            targetAnimation = "oh_attack_3";
-
-        if (lt)
-            targetAnimation = "th_attack_1";
-
+        targetAnimation = actionSlot.targetAnimation;
 
         if (string.IsNullOrEmpty(targetAnimation))
             return;
@@ -363,6 +377,14 @@ public class StateManager : MonoBehaviour
     public void HandleTwoHanded()
     {
         animator.SetBool("TwoHandedWeapon", isTwoHanded);
+
+        if (isTwoHanded)
+        {
+            actionManager.AssignWeaponActions(true);
+        } else
+        {
+            actionManager.AssignWeaponActions(false);
+        }
     }
 
 }

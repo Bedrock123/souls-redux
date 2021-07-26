@@ -30,15 +30,11 @@ public class InputHandler : MonoBehaviour
     public float rt_Input_Timer;
     public float lt_Input_Timer;
 
-
-
     float delta;
-
     StateManager stateManager;
-
     CameraManager cameraManager;
-
     private Player player;
+
 
     private void Awake()
     {
@@ -56,7 +52,6 @@ public class InputHandler : MonoBehaviour
 
     }
 
-    
     void FixedUpdate()
     {
         // Set delta as time
@@ -73,6 +68,8 @@ public class InputHandler : MonoBehaviour
 
         // Update the camera manager
         cameraManager.Tick(delta);
+
+        ResetInputAndStates();
     }
 
     private void Update()
@@ -108,6 +105,9 @@ public class InputHandler : MonoBehaviour
         // Disable weak attacks if strong attacks on
         rb_Input = rb_Input && !rt_Input;
         lb_Input = lb_Input && !lt_Input;
+
+        if (b_Input)
+            b_Input_Timer += delta;
     }
 
     void UpdateStates()
@@ -129,19 +129,20 @@ public class InputHandler : MonoBehaviour
         // Clamp that movement between 0 and 1
         stateManager.moveAmount = Mathf.Clamp01(movementAnimationSpeed);
 
-        stateManager.rollInput = b_Input;
-
         // If the run input is flagged
-        if (b_Input)
+        if (b_Input && b_Input_Timer > 0.2f)
         {
             // Only set state manage to run if our movemen taount is greater then 1
-            //stateManager.run = (stateManager.moveAmount > 0);
-        }
-        else
+            stateManager.run = (stateManager.moveAmount > 0);
+        } else
         {
-            // If not then set to false
-            //stateManager.run = false;
+            stateManager.run = false;
         }
+
+        // If we held the button for less then .5 seconds then roll
+        if (b_Input == false && b_Input_Timer > 0 && b_Input_Timer < 0.2f)
+            stateManager.rollInput = true;
+    
 
         // Update the state manager with the triggers
         stateManager.rt = rt_Input;
@@ -176,7 +177,25 @@ public class InputHandler : MonoBehaviour
 
             // Turn on the camera manager lock on flag
             cameraManager.lockOn = stateManager.lockOn;
+        } else
+        {
+            if (stateManager.lockOn == false)
+            {
+                cameraManager.lockOn = false;
+            }
         }
 
+    }
+
+    void ResetInputAndStates()
+    {
+        if (b_Input == false)
+            b_Input_Timer = 0;
+
+        if (stateManager.rollInput)
+            stateManager.rollInput = false;
+
+        if (stateManager.run)
+            stateManager.run = false;
     }
 }
